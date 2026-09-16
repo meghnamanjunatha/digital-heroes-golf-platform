@@ -1,122 +1,135 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
+import Dashboard from './Dashboard.jsx'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const API_URL = 'http://127.0.0.1:8000'
+
+async function postAuth(path, details) {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(details),
+  })
+  const result = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(typeof result.detail === 'string' ? result.detail : 'Request failed')
+  }
+
+  return result
+}
+
+function LoginPage({ navigate, notice }) {
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setError('')
+    setSubmitting(true)
+
+    const form = new FormData(event.currentTarget)
+    try {
+      const result = await postAuth('/login', {
+        email: form.get('email'),
+        password: form.get('password'),
+      })
+      if (!result.access_token) {
+        throw new Error('Login did not return an access token')
+      }
+      localStorage.setItem('access_token', result.access_token)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main className="auth-card">
+      <h1>Login</h1>
+      {notice && <p className="notice" role="status">{notice}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="login-email">Email</label>
+        <input id="login-email" name="email" type="email" autoComplete="email" required />
+        <label htmlFor="login-password">Password</label>
+        <input id="login-password" name="password" type="password" autoComplete="current-password" required />
+        <button type="submit" disabled={submitting}>{submitting ? 'Logging in...' : 'Login'}</button>
+      </form>
+      <p>New here? <a href="/signup" onClick={(event) => { event.preventDefault(); navigate('/signup') }}>Sign up</a></p>
+    </main>
   )
+}
+
+function SignupPage({ navigate, onSuccess }) {
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setError('')
+    setSubmitting(true)
+
+    const form = new FormData(event.currentTarget)
+    try {
+      await postAuth('/signup', {
+        full_name: form.get('full_name'),
+        email: form.get('email'),
+        password: form.get('password'),
+      })
+      onSuccess('Account created. Please log in.')
+      navigate('/login')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Signup failed')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <main className="auth-card">
+      <h1>Sign up</h1>
+      {error && <p className="error" role="alert">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="signup-name">Full name</label>
+        <input id="signup-name" name="full_name" type="text" autoComplete="name" required />
+        <label htmlFor="signup-email">Email</label>
+        <input id="signup-email" name="email" type="email" autoComplete="email" required />
+        <label htmlFor="signup-password">Password</label>
+        <input id="signup-password" name="password" type="password" autoComplete="new-password" required />
+        <button type="submit" disabled={submitting}>{submitting ? 'Signing up...' : 'Signup'}</button>
+      </form>
+      <p>Already have an account? <a href="/login" onClick={(event) => { event.preventDefault(); navigate('/login') }}>Login</a></p>
+    </main>
+  )
+}
+
+function App() {
+  const [path, setPath] = useState(window.location.pathname)
+  const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    const handlePopState = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  function navigate(nextPath) {
+    window.history.pushState({}, '', nextPath)
+    setPath(nextPath)
+  }
+
+  if (path === '/dashboard') {
+    return <Dashboard navigate={navigate} />
+  }
+
+  if (path === '/signup') {
+    return <SignupPage navigate={navigate} onSuccess={setNotice} />
+  }
+
+  return <LoginPage navigate={navigate} notice={notice} />
 }
 
 export default App
