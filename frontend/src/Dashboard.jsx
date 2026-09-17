@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-
-const API_URL = 'http://127.0.0.1:8000'
+import { API_BASE_URL } from './api.js'
 
 async function apiRequest(path, token, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,

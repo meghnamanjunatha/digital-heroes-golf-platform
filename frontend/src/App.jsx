@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import AdminDashboard from './AdminDashboard.jsx'
 import Dashboard from './Dashboard.jsx'
+import { API_BASE_URL } from './api.js'
 import './App.css'
 
-const API_URL = 'http://127.0.0.1:8000'
-
 async function postAuth(path, details) {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(details),
