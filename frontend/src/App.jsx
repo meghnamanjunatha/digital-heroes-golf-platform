@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AdminDashboard from './AdminDashboard.jsx'
 import Dashboard from './Dashboard.jsx'
 import './App.css'
 
@@ -123,6 +124,10 @@ function App() {
 
   if (path === '/dashboard') {
     return <Dashboard navigate={navigate} />
+  }
+
+  if (path === '/admin') {
+    return <AdminDashboard navigate={navigate} />
   }
 
   if (path === '/signup') {

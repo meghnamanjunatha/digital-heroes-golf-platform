@@ -130,6 +130,37 @@
   cursor: pointer;
 }
 
+.dashboard button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboard-link {
+  color: #1d4ed8;
+}
+
+.draw-result {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 20px 0 0;
+}
+
+.draw-result dt {
+  font-weight: 600;
+}
+
+.draw-result dd {
+  margin: 0;
+}
+
 .dashboard-section p {
   margin: 14px 0 0;
 }

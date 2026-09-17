@@ -142,7 +142,10 @@ function Dashboard({ navigate }) {
     <main className="dashboard">
       <header className="dashboard-header">
         <h1>Digital Heroes Dashboard</h1>
-        <button type="button" onClick={handleLogout}>Logout</button>
+        <div className="dashboard-actions">
+          <a className="dashboard-link" href="/admin" onClick={(event) => { event.preventDefault(); navigate('/admin') }}>Admin dashboard</a>
+          <button type="button" onClick={handleLogout}>Logout</button>
+        </div>
       </header>
 
       <section className="dashboard-section">
