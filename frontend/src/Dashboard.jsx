@@ -36,6 +36,9 @@ function Dashboard({ navigate }) {
   const [winners, setWinners] = useState([])
   const [winnersLoading, setWinnersLoading] = useState(true)
   const [winnersError, setWinnersError] = useState('')
+  const [proofMessages, setProofMessages] = useState({})
+  const [proofErrors, setProofErrors] = useState({})
+  const [proofBusyIds, setProofBusyIds] = useState({})
 
   useEffect(() => {
     if (!token) {
@@ -130,6 +133,37 @@ function Dashboard({ navigate }) {
     }
   }
 
+  async function handleSubmitProof(event, winnerId) {
+    event.preventDefault()
+    const formElement = event.currentTarget
+    const proofUrl = new FormData(formElement).get('proof_url')
+    const id = String(winnerId)
+    setProofMessages((messages) => ({ ...messages, [id]: '' }))
+    setProofErrors((errors) => ({ ...errors, [id]: '' }))
+    setProofBusyIds((busyIds) => ({ ...busyIds, [id]: true }))
+
+    try {
+      await apiRequest(`/winners/${encodeURIComponent(id)}/proof`, token, {
+        method: 'POST',
+        body: JSON.stringify({ proof_url: proofUrl }),
+      })
+      setProofMessages((messages) => ({ ...messages, [id]: 'Proof submitted successfully.' }))
+      formElement.reset()
+
+      try {
+        const updatedWinners = await apiRequest('/winners', token)
+        setWinners(updatedWinners)
+        setWinnersError('')
+      } catch (error) {
+        setProofErrors((errors) => ({ ...errors, [id]: `Proof submitted, but winnings could not be refreshed: ${error.message}` }))
+      }
+    } catch (error) {
+      setProofErrors((errors) => ({ ...errors, [id]: error.message }))
+    } finally {
+      setProofBusyIds((busyIds) => ({ ...busyIds, [id]: false }))
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem('access_token')
     navigate('/login')
@@ -210,8 +244,19 @@ function Dashboard({ navigate }) {
         {winnersLoading ? <p>Loading winnings...</p> : winnersError ? null : winners.length === 0 ? <p>No winnings yet</p> : (
           <ul className="dashboard-list">
             {winners.map((winner) => (
-              <li key={winner.id}>
+              <li key={winner.id} className="winner-item">
                 <span>{winner.match_count} matches · Prize: {winner.prize_amount} · Verification: {winner.verification_status} · Payment: {winner.payment_status}</span>
+                {winner.verification_status === 'pending' && (
+                  <form className="dashboard-form" onSubmit={(event) => handleSubmitProof(event, winner.id)}>
+                    <label htmlFor={`winner-proof-${winner.id}`}>Proof URL</label>
+                    <input id={`winner-proof-${winner.id}`} name="proof_url" type="url" required />
+                    <button type="submit" disabled={proofBusyIds[winner.id]}>
+                      {proofBusyIds[winner.id] ? 'Submitting...' : 'Submit Proof'}
+                    </button>
+                  </form>
+                )}
+                {proofMessages[winner.id] && <p className="notice" role="status">{proofMessages[winner.id]}</p>}
+                {proofErrors[winner.id] && <p className="error" role="alert">{proofErrors[winner.id]}</p>}
               </li>
             ))}
           </ul>

@@ -182,3 +182,8 @@
   border: 1px solid #e2e8f0;
   border-radius: 6px;
 }
+
+.dashboard-list .winner-item {
+  flex-direction: column;
+  align-items: stretch;
+}
